@@ -626,16 +626,20 @@ public class HashMap<K,V> extends AbstractMap<K,V>
         Node<K,V>[] tab; Node<K,V> p; int n, i;
         if ((tab = table) == null || (n = tab.length) == 0)
             n = (tab = resize()).length;
+        //对应的桶没有数据，直接插入
         if ((p = tab[i = (n - 1) & hash]) == null)
             tab[i] = newNode(hash, key, value, null);
         else {
             Node<K,V> e; K k;
+            //如果插入的key和定位到的第一个相等并且hash值也一致，则是更新
             if (p.hash == hash &&
                 ((k = p.key) == key || (key != null && key.equals(k))))
                 e = p;
             else if (p instanceof TreeNode)
+                //如果是红黑树，插入到红黑树中
                 e = ((TreeNode<K,V>)p).putTreeVal(this, tab, hash, key, value);
             else {
+                //链表
                 for (int binCount = 0; ; ++binCount) {
                     if ((e = p.next) == null) {
                         p.next = newNode(hash, key, value, null);
@@ -748,15 +752,23 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     }
 
     /**
+     * 链表转换为红黑树
+     *
      * Replaces all linked nodes in bin at index for given hash unless
      * table is too small, in which case resizes instead.
      */
     final void treeifyBin(Node<K,V>[] tab, int hash) {
+
         int n, index; Node<K,V> e;
+
+        //1、新的数组或者数组长度小于64，则不转换为红黑树，而是进行扩容
         if (tab == null || (n = tab.length) < MIN_TREEIFY_CAPACITY)
             resize();
+
+        //2、获取hash处的第一个链表节点
         else if ((e = tab[index = (n - 1) & hash]) != null) {
             TreeNode<K,V> hd = null, tl = null;
+            //3整个循环将链表节点转换为树型的链表节点
             do {
                 TreeNode<K,V> p = replacementTreeNode(e, null);
                 if (tl == null)
@@ -767,6 +779,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                 }
                 tl = p;
             } while ((e = e.next) != null);
+            //4、将头结点指向数组，将树型链表转换为红黑树
             if ((tab[index] = hd) != null)
                 hd.treeify(tab);
         }
